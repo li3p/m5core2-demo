@@ -1,9 +1,12 @@
 
-/build/
+/build
 /sdkconfig
 /sdkconfig.old
-/config/*
-Makefile
-sdkconfig
-sdkconfig.ci
+/config
+/sdkconfig
+/sdkconfig.ci
+/sdkconfig.old
 .DS_Store
+/.project
+/.vscode
+/trace

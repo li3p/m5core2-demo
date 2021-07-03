@@ -9,8 +9,7 @@
 
 &nbsp;
 
-The original repository is intended as a straightforward example or base project for
-using the M5Stack Core2 with ESP-IDF directly in C - i.e. No Arduino. This adds a number of components to make programming the M5Core2 easy using ESP-IDF. This now serves as much as a demo for how to get things working on an M5Stack Core2 device a it is a demo for the capabilities of the I2C Manager component that I wrote and the modifications to the lvgl\_esp\_drivers component.
+The original repository is intended as a straightforward example or base project for using the M5Stack Core2 with ESP-IDF directly in C - i.e. No Arduino. This adds a number of components to make programming the M5Core2 easy using ESP-IDF. This now serves as much as a demo for how to get things working on an M5Stack Core2 device a it is a demo for the capabilities of the I2C Manager component that I wrote and the modifications to the lvgl\_esp\_drivers component.
 
 Enjoy!
 

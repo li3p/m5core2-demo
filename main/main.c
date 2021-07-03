@@ -21,6 +21,9 @@
 
 #define LV_TICK_PERIOD_MS 1
 
+#undef DISP_BUF_SIZE
+#define DISP_BUF_SIZE 1360
+
 
 enum toggle_id {
 	TOGGLE_LED = 0,
@@ -28,52 +31,48 @@ enum toggle_id {
 	TOGGLE_5V,
 };
 
-static void toggle_event_cb(lv_obj_t *toggle, lv_event_t event)
-{
-	if(event == LV_EVENT_VALUE_CHANGED) {
-		bool state = lv_switch_get_state(toggle);
-		enum toggle_id *id = lv_obj_get_user_data(toggle);
+static void toggle_event_cb(lv_event_t * event) {
+	lv_obj_t *toggle = lv_event_get_target(event);
+	bool state = lv_obj_has_state(toggle, LV_STATE_CHECKED);
+	enum toggle_id *id = lv_obj_get_user_data(toggle);
 
-		// Note: This is running in the GUI thread, so prolonged i2c
-		// comms might cause some jank
-		switch (*id) {
-		case TOGGLE_LED:
-			m5core2_led(state);
-			break;
-		case TOGGLE_VIB:
-			m5core2_vibration(state);
-			break;
-		case TOGGLE_5V:
-			m5core2_int_5v(state);
-			break;
-		}
+	// Note: This is running in the GUI thread, so prolonged i2c
+	// comms might cause some jank
+	switch (*id) {
+	case TOGGLE_LED:
+		m5core2_led(state);
+		break;
+	case TOGGLE_VIB:
+		m5core2_vibration(state);
+		break;
+	case TOGGLE_5V:
+		m5core2_int_5v(state);
+		break;
 	}
 }
 
-static void gui_timer_tick(void *arg)
-{
+static void gui_timer_tick(void *arg) {
 	// Unused
 	(void) arg;
 
 	lv_tick_inc(LV_TICK_PERIOD_MS);
 }
 
-static void gui_thread(void *pvParameter)
-{
+static void gui_thread(void *pvParameter) {
 	(void) pvParameter;
 
 	static lv_color_t bufs[2][DISP_BUF_SIZE];
-	static lv_disp_buf_t disp_buf;
+	static lv_disp_draw_buf_t disp_buf;
 	uint32_t size_in_px = DISP_BUF_SIZE;
 
 	// Set up the frame buffers
-	lv_disp_buf_init(&disp_buf, &bufs[0], &bufs[1], size_in_px);
+	lv_disp_draw_buf_init(&disp_buf, &bufs[0], &bufs[1], size_in_px);
 
 	// Set up the display driver
 	lv_disp_drv_t disp_drv;
 	lv_disp_drv_init(&disp_drv);
 	disp_drv.flush_cb = disp_driver_flush;
-	disp_drv.buffer = &disp_buf;
+	disp_drv.draw_buf = &disp_buf;
 	lv_disp_drv_register(&disp_drv);
 
 	// Register the touch screen. All of the properties of it
@@ -95,11 +94,13 @@ static void gui_thread(void *pvParameter)
 
 
 	// Full screen root container
-	lv_obj_t *root = lv_cont_create(lv_scr_act(), NULL);
+	lv_obj_t *root = lv_obj_create(NULL);
 	lv_obj_set_size(root, 320, 240);
-	lv_cont_set_layout(root, LV_LAYOUT_COLUMN_MID);
+	lv_obj_set_layout(root, LV_LAYOUT_FLEX);
+	lv_obj_set_flex_flow(root, LV_FLEX_FLOW_COLUMN);
+	// lv_cont_set_layout(root, LV_LAYOUT_COLUMN_MID);
 	// Don't let the containers be clicked on
-	lv_obj_set_click(root, false);
+	// lv_obj_clear_flag(root, LV_OBJ_FLAG_CLICKABLE);
 
 	// Create rows of switches for different functions
 	struct {
@@ -112,21 +113,21 @@ static void gui_thread(void *pvParameter)
 		{ "5V Bus",  false, TOGGLE_5V },
 	};
 	for (int i = 0; i < sizeof(switches) / sizeof(switches[0]); i++) {
-		lv_obj_t *row = lv_cont_create(root, NULL);
-		lv_cont_set_layout(row, LV_LAYOUT_ROW_MID);
-		lv_obj_set_size(row, 200, 0);
-		lv_cont_set_fit2(row, LV_FIT_NONE, LV_FIT_TIGHT);
+		// lv_obj_t *row = lv_cont_create(root, NULL);
+		//lv_cont_set_layout(row, LV_LAYOUT_ROW_MID);
+		// lv_obj_set_size(row, 200, 0);
+		//lv_cont_set_fit2(row, LV_FIT_NONE, LV_FIT_TIGHT);
 		// Don't let the containers be clicked on
-		lv_obj_set_click(row, false);
+		// lv_obj_set_click(row, false);
 
-		lv_obj_t *toggle = lv_switch_create(row, NULL);
+		lv_obj_t *toggle = lv_switch_create(root);
 		if (switches[i].init) {
-			lv_switch_on(toggle, LV_ANIM_OFF);
+			lv_obj_clear_state(toggle, LV_STATE_CHECKED);
 		}
 		lv_obj_set_user_data(toggle, &switches[i].id);
-		lv_obj_set_event_cb(toggle, toggle_event_cb);
+		lv_obj_add_event_cb(toggle, toggle_event_cb, LV_EVENT_VALUE_CHANGED, NULL);
 
-		lv_obj_t *label = lv_label_create(row, NULL);
+		lv_obj_t *label = lv_label_create(toggle);
 		lv_label_set_text(label, switches[i].label);
 	}
 
@@ -140,8 +141,7 @@ static void gui_thread(void *pvParameter)
 }
 
 
-void app_main(void)
-{
+void app_main(void) {
 	printf("Hello world!\n");
 
 	/* Print chip information */
