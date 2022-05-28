@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"task.h": "c",
+			"stdio.h": "c",
+			"sdkconfig.h": "c",
+			"freertos.h": "c",
+			"semphr.h": "c",
+			"lvgl_helpers.h": "c"
+		}
+	}
+}
